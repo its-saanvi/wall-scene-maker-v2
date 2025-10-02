@@ -1,6 +1,6 @@
 import React from 'react';
 import { Rnd } from 'react-rnd';
-import { Group as GroupType } from '../types';
+import { type Group as GroupType } from '../types';
 import { useScene } from './SceneProvider';
 import { useEditing } from './EditingProvider';
 import DirtImage from "/dirt.png";
@@ -11,7 +11,7 @@ interface GroupProps {
 }
 
 export const Group: React.FC<GroupProps> = ({ group, groupType }) => {
-  const { deleteGroup, setSelectedGroup, updateGroup, selectedGroup } = useScene();
+  const { deleteGroup, setSelectedGroup, updateGroupPosition, selectedGroup } = useScene();
   const { isEditing, setIsEditing } = useEditing();
 
   const handleDelete = () => {
@@ -19,7 +19,7 @@ export const Group: React.FC<GroupProps> = ({ group, groupType }) => {
   };
 
   const handleEdit = () => {
-    setSelectedGroup({ groupType, id: group.id });
+    setSelectedGroup({ groupType, id: group.id!! });
     setIsEditing(true);
   }
 
@@ -59,21 +59,13 @@ export const Group: React.FC<GroupProps> = ({ group, groupType }) => {
                 width: pos.width * group.width,
                 height: pos.height * group.height,
               }}
-              onDragStop={(e, d) => {
-                const newPositions = [...(group.positions || [])];
-                newPositions[i] = { ...newPositions[i], x: d.x / group.width, y: d.y / group.height };
-                updateGroup(groupType, group.id, { positions: newPositions });
-              }}
-              onResizeStop={(e, direction, ref, delta, position) => {
-                const newPositions = [...(group.positions || [])];
-                newPositions[i] = {
-                  ...newPositions[i],
-                  x: position.x / group.width,
-                  y: position.y / group.height,
-                  width: parseFloat(ref.style.width) / group.width,
-                  height: parseFloat(ref.style.height) / group.height,
-                };
-                updateGroup(groupType, group.id, { positions: newPositions });
+              onDragStop={(_e, d) => updateGroupPosition(groupType, group.id, i, { x: d.x / group.width, y: d.y / group.height })}
+              onResizeStop={(_e, _direction, ref, _delta, newPosition) => {
+                const newWidth = parseFloat(ref.style.width) / group.width;
+                const newHeight = parseFloat(ref.style.height) / group.height;
+                const newX = newPosition.x / group.width;
+                const newY = newPosition.y / group.height;
+                updateGroupPosition(groupType, group.id, i, { width: newWidth, height: newHeight, x: newX, y: newY });
               }}
               disableDragging={!isEditing}
               enableResizing={isEditing}

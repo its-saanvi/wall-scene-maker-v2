@@ -1,7 +1,7 @@
 import React from 'react';
 import { useScene } from './SceneProvider';
 import { useEditing } from './EditingProvider';
-import { Group, Position } from '../types';
+import type { Group, Position } from '../types';
 
 export const EditingToolbar: React.FC = () => {
   const { selectedGroup, updateGroup, layout } = useScene();

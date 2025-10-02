@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useScene } from './SceneProvider';
-import { Group, Layout, PositionsGroup, type LayoutUnparsed } from '../types';
+import type { Group, Layout, PositionsGroup, LayoutUnparsed } from '../types';
 
 interface ToolbarProps { }
 

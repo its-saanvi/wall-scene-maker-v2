@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Layout, Group, GridGroup } from '../types';
+import type { Layout, Group, GridGroup, PositionsGroup } from '../types';
 
 interface SceneContextType {
   layout: Layout;
   setLayout: React.Dispatch<React.SetStateAction<Layout>>;
   backgroundImage: string | null;
   setBackgroundImage: React.Dispatch<React.SetStateAction<string | null>>;
-  updateGroup: (groupType: 'main' | 'locked' | 'preparing', id: string, newGroup: Partial<Group>) => void;
-  deleteGroup: (groupType: 'main' | 'locked' | 'preparing', id: string) => void;
+  updateGroup: (groupType: 'main' | 'locked' | 'preparing', id: string | undefined, newGroup: Partial<Group>) => void;
+  updateGroupPosition: (groupType: 'main' | 'locked' | 'preparing', groupId: string | undefined, positionIndex: number, newPosition: { x?: number; y?: number; width?: number; height?: number }) => void;
+  deleteGroup: (groupType: 'main' | 'locked' | 'preparing', id: string | undefined) => void;
   originalCanvasSize: { width: number; height: number };
   setOriginalCanvasSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>;
   displayCanvasSize: { width: number; height: number };
@@ -65,7 +66,7 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   }, [setLayout]);
 
-  const updateGroup = (groupType: 'main' | 'locked' | 'preparing', id: string, newGroup: Partial<Group>) => {
+  const updateGroup = (groupType: 'main' | 'locked' | 'preparing', id: string | undefined, newGroup: Partial<Group>) => {
     setLayout(prevLayout => {
       const newLayout = { ...prevLayout };
 
@@ -91,7 +92,39 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const deleteGroup = (groupType: 'main' | 'locked' | 'preparing', id: string) => {
+  const updateGroupPosition = (groupType: 'main' | 'locked' | 'preparing', groupId: string | undefined, positionIndex: number, newPosition: { x?: number; y?: number; width?: number; height?: number }) => {
+    setLayout(prevLayout => {
+      const newLayout = { ...prevLayout };
+      let targetGroup: Group | undefined;
+
+      if (groupType === 'main' && newLayout.main?.id === groupId) {
+        targetGroup = newLayout.main;
+      } else if (groupType === 'locked' && newLayout.locked?.id === groupId) {
+        targetGroup = newLayout.locked;
+      } else if (groupType === 'preparing' && newLayout.preparing) {
+        targetGroup = newLayout.preparing.find(g => g.id === groupId);
+      }
+
+      if (targetGroup && targetGroup.type === 'positions' && targetGroup.positions && targetGroup.positions[positionIndex]) {
+        const updatedPositions = [...targetGroup.positions];
+        updatedPositions[positionIndex] = { ...updatedPositions[positionIndex], ...newPosition };
+
+        if (groupType === 'main' && newLayout.main?.id === groupId) {
+          newLayout.main = { ...(newLayout.main as PositionsGroup), positions: updatedPositions };
+        } else if (groupType === 'locked' && newLayout.locked?.id === groupId) {
+          newLayout.locked = { ...(newLayout.locked as PositionsGroup), positions: updatedPositions };
+        } else if (groupType === 'preparing' && newLayout.preparing) {
+          const index = newLayout.preparing.findIndex(g => g.id === groupId);
+          if (index !== -1) {
+            newLayout.preparing[index] = { ...(newLayout.preparing[index] as PositionsGroup), positions: updatedPositions };
+          }
+        }
+      }
+      return newLayout;
+    });
+  };
+
+  const deleteGroup = (groupType: 'main' | 'locked' | 'preparing', id: string | undefined) => {
     setLayout(prevLayout => {
       const newLayout = { ...prevLayout };
       if (groupType === 'main' && newLayout.main?.id === id) {
@@ -106,7 +139,7 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <SceneContext.Provider value={{ layout, setLayout, backgroundImage, setBackgroundImage, addGroup, updateGroup, deleteGroup, originalCanvasSize, setOriginalCanvasSize, displayCanvasSize, selectedGroup, setSelectedGroup }}>
+    <SceneContext.Provider value={{ layout, setLayout, backgroundImage, setBackgroundImage, addGroup, updateGroup, updateGroupPosition, deleteGroup, originalCanvasSize, setOriginalCanvasSize, displayCanvasSize, selectedGroup, setSelectedGroup }}>
       {children}
     </SceneContext.Provider>
   );

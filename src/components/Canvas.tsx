@@ -63,16 +63,16 @@ export const Canvas: React.FC<CanvasProps> = ({ scale }) => {
         width: group.width,
         height: group.height,
       }}
-      onDragStart={(e, d) => {
+      onDragStart={() => {
         setSelectedGroup({ groupType, id: group.id });
       }}
-      onDragStop={(e, d) => updateGroup(groupType, group.id, { x: d.x, y: d.y })}
-      onResizeStop={(e, direction, ref, delta, position) => {
+      onDragStop={(_e, d) => updateGroup(groupType, group.id, { x: d.x, y: d.y })}
+      onResizeStop={(_e, _direction, _ref, delta, position) => {
         const newWidth = group.width + delta.width;
         const newHeight = group.height + delta.height;
-        updateGroup(groupType, group.id, { width: newWidth, height: newHeight, x: position.x, y: position.y });
+        updateGroup(groupType, group.id, { width: newWidth, height: newHeight, ...position });
       }}
-      onClick={(e) => {
+      onClick={(e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('[data-is-preview="true"]')) {
           return;
         }
